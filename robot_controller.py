@@ -26,16 +26,7 @@ class RobotController:
             if "panda" in p.getBodyInfo(i)[1].decode("utf-8"):
                 return i
         return None
-
-    def get_current_joint_angles(self):
-        """获取机械臂当前7个关节的角度"""
-        if self.robotId is None:
-            return [0]*7
-        angles = []
-        for i in range(7):
-            angles.append(p.getJointState(self.robotId, i)[0])
-        return angles
-
+    
     def move_to_smooth(self, target_pos, steps=100, delay=0.01):
         """平滑移动到目标位置（带零空间约束和高精度IK）"""
         if self.robotId is None:
@@ -124,6 +115,15 @@ class RobotController:
         # 锁定位置
         for i in range(7):
             p.setJointMotorControl2(self.robotId, i, p.POSITION_CONTROL, targetPosition=target_joints[i], force=200)
+
+    def get_current_joint_angles(self):
+        """获取机械臂当前7个关节的角度"""
+        if self.robotId is None:
+            return [0]*7
+        angles = []
+        for i in range(7):
+            angles.append(p.getJointState(self.robotId, i)[0])
+        return angles
 
 if __name__ == "__main__":
     # 测试控制
