@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- 核心 Prompt：纯粹的坐标计算与逻辑 ---
+# 核心 Prompt：纯粹的坐标计算与逻辑
 END2END_PROMPT = """
 你是一个精通机械臂控制的数学家。你的任务是为【指定原料】生成动作序列。
 
@@ -56,25 +56,29 @@ END2END_PROMPT = """
 """
 
 class End2EndPlanner:
+    """运动规划器：基于 LLM 生成机械臂动作序列"""
+
     def __init__(self):
         self.api_key = os.getenv("ZHIPUAI_API_KEY")
         self.client = ZhipuAiClient(api_key=self.api_key)
 
     def _clean_json(self, text):
+        """清理 LLM 返回的 JSON 格式"""
         text = re.sub(r"```json|```", "", text)
-        start = text.find('['); end = text.rfind(']')
+        start = text.find('[')
+        end = text.rfind(']')
         return text[start:end+1] if start != -1 else "[]"
 
     def plan_ingredient(self, name, amount, grid):
-        """为单个原料生成全套动作"""
+        """为单个原料生成完整动作序列"""
         user_input = json.dumps({
             "target": name,
             "grid": grid,
             "amount_ml": amount
         })
-        
-        print(f"🤖 [AI计算] {name} (Grid {grid})...")
-        
+
+        print(f"🤖 规划动作: {name} (Grid {grid})...")
+
         try:
             response = self.client.chat.completions.create(
                 model="glm-4.5-flash",
@@ -88,24 +92,22 @@ class End2EndPlanner:
             content = self._clean_json(response.choices[0].message.content)
             return json.loads(content)
         except Exception as e:
-            print(f"❌ 计算失败: {e}")
+            print(f"❌ 规划失败: {e}")
             return []
 
     def plan_recipe(self, recipe, location_map):
+        """根据配方和位置地图生成完整动作计划"""
         full_plan = []
-        
-        # --- 修改：移除了这里手写的初始动作，完全信任 AI 的第一步 ---
-        # 既然 AI 的 SOP 第一步就是去 Work Pose，这里就不需要加了
-        
+
         for step in recipe:
             name = step['ingredient']
             amount = step['amount_ml']
             grid = location_map.get(name)
-            
+
             if not grid:
                 print(f"⚠️ 找不到 {name}，跳过")
                 continue
-            
+
             actions = self.plan_ingredient(name, amount, grid)
             if actions:
                 full_plan.extend(actions)
@@ -116,7 +118,7 @@ class End2EndPlanner:
 
 if __name__ == "__main__":
     planner = End2EndPlanner()
-    
+
     mock_recipe = [
         {"ingredient": "ESPRESSO", "amount_ml": 40},
         {"ingredient": "MILK", "amount_ml": 200}
@@ -125,11 +127,11 @@ if __name__ == "__main__":
         "ESPRESSO": [0, 0],
         "MILK": [0, 2]
     }
-    
+
     final_plan = planner.plan_recipe(mock_recipe, mock_map)
-    
+
     with open("robot_plan.json", "w") as f:
         json.dump(final_plan, f, indent=2)
-        
-    print(f"\n✅ 计划生成完毕！共 {len(final_plan)} 步。")
+
+    print(f"\n✅ 计划生成完毕，共 {len(final_plan)} 步")
     print(json.dumps(final_plan[:5], indent=2))

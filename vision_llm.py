@@ -8,8 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- 视觉专家的核心知识库 ---
-# 这里定义了颜色特征，帮助 VLM 认出谁是谁
+# 视觉专家的核心知识库
 INGREDIENT_FEATURES = """
 1. **ESPRESSO** (浓缩咖啡): 深黑褐色/黑色瓶子。
 2. **WATER** (水): 鲜艳的深蓝色瓶子。
@@ -48,6 +47,8 @@ SYSTEM_PROMPT = f"""
 """
 
 class VisionLLM:
+    """视觉识别器：基于 VLM 识别图像中的原料位置"""
+
     def __init__(self):
         self.api_key = os.getenv("ZHIPUAI_API_KEY")
         if not self.api_key:
@@ -55,16 +56,20 @@ class VisionLLM:
         self.client = ZhipuAiClient(api_key=self.api_key)
 
     def _encode_image(self, image_path):
-        if not image_path.exists(): return None
+        """将图像编码为 Base64"""
+        if not image_path.exists():
+            return None
         mime_type, _ = mimetypes.guess_type(image_path)
-        if mime_type is None: mime_type = "application/octet-stream"
+        if mime_type is None:
+            mime_type = "application/octet-stream"
         with open(image_path, "rb") as image_file:
             base64_data = base64.b64encode(image_file.read()).decode('utf-8')
         return f"data:{mime_type};base64,{base64_data}"
 
     def detect_ingredients(self, image_path_str: str):
-        print(f"👁️ 视觉感知中... 正在分析图片: {image_path_str}")
-        
+        """识别图像中的原料位置"""
+        print(f"👁️ 视觉感知中...")
+
         base64_url = self._encode_image(Path(image_path_str))
         if not base64_url:
             print("❌ 图片加载失败")
@@ -72,50 +77,45 @@ class VisionLLM:
 
         try:
             response = self.client.chat.completions.create(
-                model="glm-4.6v-flash", # 使用视觉模型
+                model="glm-4.6v-flash",
                 messages=[
                     {
-                        "role": "user", 
+                        "role": "user",
                         "content": [
                             {"type": "text", "text": SYSTEM_PROMPT},
                             {"type": "image_url", "image_url": {"url": base64_url}}
                         ]
                     }
                 ],
-                temperature=0.1, # 低温度保证准确
+                temperature=0.1,
                 top_p=0.5,
             )
-            
+
             content = response.choices[0].message.content
-            
-            # 清理 Markdown 代码块标记 (```json ... ```)
+
+            # 清理 Markdown 代码块
             if "```" in content:
                 content = content.replace("```json", "").replace("```", "")
-            
-            # 解析 JSON
+
             location_map = json.loads(content)
-            print("✅ 视觉识别成功！库存地图已构建。")
+            print("✅ 视觉识别成功")
             return location_map
 
         except Exception as e:
             print(f"❌ 视觉识别失败: {e}")
-            # print("原始返回:", content) # 调试用
             return None
 
-# --- 测试 ---
 if __name__ == "__main__":
     eye = VisionLLM()
-    # 确保你已经运行过 get_camera_view.py 拍了一张照片
-    image_file = "captured_scene.png" 
-    
+    image_file = "captured_scene.png"
+
     if os.path.exists(image_file):
         result = eye.detect_ingredients(image_file)
         print(json.dumps(result, indent=2, ensure_ascii=False))
-        
-        # 简单验证逻辑
+
         if result and result.get("ESPRESSO") == [0, 0]:
-            print("\n🎉 测试通过！成功识别出 ESPRESSO 在 [0,0]")
+            print("\n🎉 测试通过")
         else:
-            print("\n⚠️ 识别结果可能有误，请检查图片清晰度或颜色描述。")
+            print("\n⚠️ 识别结果可能有误")
     else:
-        print(f"请先运行 get_camera_view.py 生成 {image_file}")
+        print(f"❌ 请先运行 camera_manager.py 生成 {image_file}")
