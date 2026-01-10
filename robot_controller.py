@@ -200,7 +200,6 @@ if __name__ == "__main__":
     controller.move_to_smooth([0.2, -0.05, 0.8+0.15*0], steps=150)
     controller.move_to_smooth([0.2, 0.085, 0.8+0.15*0], steps=150)
     controller.grab(0.04)
-
     controller.move_to_smooth([0.2, -0.05, 0.8+0.15*0], steps=150)
 
     
