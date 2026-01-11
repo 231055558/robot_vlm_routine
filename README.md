@@ -36,11 +36,11 @@ conda activate robot_vlm
 安装依赖包：
 
 ```bash
-pip install pybullet==3.1.11
-pip install matplotlib==3.7.4
-pip install numpy==1.24.3
-pip install zhipuai==2.1.5.20241226
-pip install python-dotenv==1.0.0
+pip install pybullet
+pip install matplotlib
+pip install numpy
+pip install zai-sdk
+pip install python-dotenv
 ```
 
 ### API 密钥配置
@@ -51,7 +51,7 @@ pip install python-dotenv==1.0.0
 ZHIPUAI_API_KEY="your_zai_api_key"
 ```
 
-> 获取方式：访问 [智谱 AI 开放平台](https://open.bigmodel.cn) 注册并获取 API 密钥
+> 获取方式：访问 [智谱 AI 开放平台](bigmodel.cn) 注册并获取 API 密钥
 
 ## 程序说明
 
