@@ -51,7 +51,7 @@ pip install python-dotenv
 ZHIPUAI_API_KEY="your_zai_api_key"
 ```
 
-> 获取方式：访问 [智谱 AI 开放平台](bigmodel.cn) 注册并获取 API 密钥
+> 获取方式：访问 [智谱 AI 开放平台](https://bigmodel.cn/) 注册并获取 API 密钥
 
 ## 程序说明
 
